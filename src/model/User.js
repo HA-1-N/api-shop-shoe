@@ -1,34 +1,32 @@
 const mongoose = require("mongoose");
+const Schema = mongoose.Schema;
 
-const UserSchema = new mongoose.Schema(
+const UserSchema = new Schema(
   {
-    username: {
+    userName: {
       type: String,
-      required: true, // yêu cầu phải có khi gửi payload lên
-      unique: true, // username là duy nhất nên có unique
-    },
-
-    email: {
-      type: String,
-      required: true,
+      require: true,
       unique: true,
     },
-
+    email: {
+      type: String,
+      require: true,
+      unique: true,
+    },
     password: {
       type: String,
-      required: true,
+      require: true,
     },
-
     rePassword: {
       type: String,
-      required: true,
+      require: true,
     },
-
-    phone: { type: String, unique: true },
-
+    phone: {
+      type: String,
+    },
     isAdmin: {
       type: Boolean,
-      default: Boolean,
+      default: false,
     },
   },
 

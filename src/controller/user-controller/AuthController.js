@@ -2,15 +2,45 @@ const router = require("express").Router();
 const User = require("../../model/User");
 const CryptoJS = require("crypto-js");
 const jwt = require("jsonwebtoken");
+const {
+  registerValidation,
+  loginValidation,
+} = require("../../validators/validationAuth/validationAuth");
 
 // Register
 const registerUser = async (req, res) => {
+  // Lets validate the data before we a user
+  const { error } = registerValidation(req.body);
+
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+
+  // Checking if userName is already in the database
+  const userNameExist = await User.findOne({
+    userName: req.body.userName,
+  });
+
+  if (userNameExist) {
+    return res.status(400).send("userName is already");
+  }
+
+  // Checking if email is already in the database
+  const emailExist = await User.findOne({
+    email: req.body.email,
+  });
+
+  if (emailExist) {
+    return res.status(400).send("Email is already");
+  }
+
   const newUser = new User({
-    username: req.body.username,
+    userName: req.body.userName,
     email: req.body.email,
     password: CryptoJS.AES.encrypt(req.body.password, process.env.PASS_SEC),
     rePassword: CryptoJS.AES.encrypt(req.body.rePassword, process.env.PASS_SEC),
     phone: req.body.phone,
+    isAdmin: req.body.isAdmin,
   });
 
   try {
@@ -23,10 +53,16 @@ const registerUser = async (req, res) => {
 
 // login
 const login = async (req, res) => {
-  try {
-    const user = await User.findOne({ username: req.body.username });
+  const { error } = loginValidation(req.body);
 
-    !user && res.status(401).json("Wrong credentials !");
+  if (error) {
+    return res.status(400).send(error.details[0].message);
+  }
+
+  try {
+    const user = await User.findOne({ userName: req.body.userName });
+
+    !user && res.status(401).json("User is not found !");
 
     const hashedPassword = CryptoJS.AES.decrypt(
       user.password,
