@@ -112,6 +112,7 @@ const updateBrand = async (req, res) => {
   }
 };
 
+// Delete
 const deleteBrand = async (req, res) => {
   try {
     const brandCodeDelete = req.body.brandCode;

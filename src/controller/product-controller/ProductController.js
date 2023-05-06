@@ -61,32 +61,68 @@ const filterProduct = async (req, res) => {
       query.productCode = productCode;
     }
     if (brandCode) {
-      query.brandCode = brandCode;
+      query["brand.code"] = brandCode;
     }
     if (name) {
       query.name = name;
     }
 
+    const pipeline = [
+      { $match: query },
+      {
+        $lookup: {
+          from: "brands",
+          localField: "brand.code",
+          foreignField: "code",
+          as: "brand",
+        },
+      },
+      {
+        $unwind: "$brand",
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          price: 1,
+          "brand.name": 1,
+        },
+      },
+      {
+        $facet: {
+          products: [
+            { $skip: (parseInt(page) - 1) * parseInt(limit) },
+            { $limit: parseInt(limit) },
+          ],
+          total: [
+            {
+              $count: "total",
+            },
+          ],
+        },
+      },
+    ];
+
+    const results = await Product.aggregate(pipeline);
+
     // Query the database to find the matching products
-    const products = await Product.find(query)
-      .skip(startIndex)
-      .limit(limit)
-      .exec();
+    // const products = await Product.find(query)
+    //   .skip(startIndex)
+    //   .limit(limit)
+    //   .exec();
 
     // const products = await Product.aggregate(pipeline)
     //
     // Calculate the total number of documents matching the filter criteria
-    const count = await Product.countDocuments(query);
+    // const count = await Product.countDocuments(query);
 
     // Return the filtered products
     // Create a response object containing the filtered data and pagination metadata
     const response = {
-      products,
-      pagination: {
-        currentPage: page,
-        totalPages: Math.ceil(count / limit),
-        totalItems: count,
-      },
+      products: results[0].products,
+      total: results[0].total[0].total,
+      page: parseInt(page),
+      limit: parseInt(limit),
     };
 
     res.status(200).json(response);
