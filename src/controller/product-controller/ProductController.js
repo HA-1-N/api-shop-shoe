@@ -50,6 +50,10 @@ const filterProduct = async (req, res) => {
   try {
     // Get the filter criteria from the request body
     const { productCode, brandCode, name } = req.body;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const startIndex = (page - 1) * limit;
+    const endIndex = page * limit;
 
     // Build the query based on the filter criteria
     const query = {};
@@ -64,10 +68,28 @@ const filterProduct = async (req, res) => {
     }
 
     // Query the database to find the matching products
-    const products = await Product.find(query);
+    const products = await Product.find(query)
+      .skip(startIndex)
+      .limit(limit)
+      .exec();
+
+    // const products = await Product.aggregate(pipeline)
+    //
+    // Calculate the total number of documents matching the filter criteria
+    const count = await Product.countDocuments(query);
 
     // Return the filtered products
-    res.json(products);
+    // Create a response object containing the filtered data and pagination metadata
+    const response = {
+      products,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(count / limit),
+        totalItems: count,
+      },
+    };
+
+    res.status(200).json(response);
   } catch (err) {
     // Return an error response if there was an error
     res.status(500).json({ error: "Internal server error" });
