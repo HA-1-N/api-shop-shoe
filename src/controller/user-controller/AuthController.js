@@ -2,10 +2,14 @@ const router = require("express").Router();
 const User = require("../../model/User");
 const CryptoJS = require("crypto-js");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
+const { sendEmail } = require("../../util/sendEmail");
 const {
   registerValidation,
   loginValidation,
 } = require("../../validators/validationAuth/validationAuth");
+const Joi = require("joi");
+const Token = require("../../model/Token");
 
 // Register
 const registerUser = async (req, res) => {
@@ -91,7 +95,64 @@ const login = async (req, res) => {
   }
 };
 
+// Forgot password
+const forgotPassword = async (req, res) => {
+  const schema = Joi.object({ email: Joi.string().email().required() });
+  const { error } = schema.validate(req.body);
+  if (error) return res.status(400).send(error.details[0].message);
+
+  try {
+    const user = await User.findOne({ email: req.body.email });
+    if (!user) {
+      res.status(401).json({ message: "User is not found !" });
+    }
+    let token = await Token.findOne({ userId: user._id });
+
+    if (!token) {
+      token = await new Token({
+        userId: user._id,
+        token: crypto.randomBytes(32).toString("hex"),
+      }).save();
+    }
+    const link = `localhost:5000/api/auth/password-reset/${user._id}/${token.token}`;
+    await sendEmail(user.email, "Password reset", link);
+
+    res.send("password reset link sent to your email account");
+  } catch (error) {
+    res.send("An error occured");
+    console.log(error);
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const schema = Joi.object({ password: Joi.string().required() });
+    const { error } = schema.validate(req.body);
+    if (error) return res.status(400).send(error.details[0].message);
+
+    const user = await User.findById(req.params.userId);
+    if (!user) return res.status(400).send("invalid link or expired");
+
+    const token = await Token.findOne({
+      userId: user._id,
+      token: req.params.token,
+    });
+    if (!token) return res.status(400).send("Invalid link or expired");
+
+    user.password = req.body.password;
+    await user.save();
+    await token.delete();
+
+    res.send("password reset sucessfully.");
+  } catch (error) {
+    res.send("An error occured");
+    console.log(error);
+  }
+};
+
 module.exports = {
   registerUser,
   login,
+  forgotPassword,
+  resetPassword,
 };
