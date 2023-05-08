@@ -65,7 +65,7 @@ const createProduct = async (req, res) => {
 const filterProduct = async (req, res) => {
   try {
     // Get the filter criteria from the request body
-    const { productCode, brandCode, name } = req.body;
+    const { productCode, brandCode, name, color, size } = req.body;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const startIndex = (page - 1) * limit;
@@ -83,14 +83,23 @@ const filterProduct = async (req, res) => {
       query.name = name;
     }
 
+    if (color && color.length > 0) {
+      query.color = { $in: color };
+    }
+
+    if (size && size.length > 0) {
+      query.size = { $in: size };
+    }
+
     // Query the database to find the matching products
     const products = await Product.find(query)
       .populate("brand")
+      .sort({ createdAt: -1 })
       .skip(startIndex)
       .limit(limit)
       .exec();
 
-    const count = await Brand.countDocuments(query);
+    const count = await Product.countDocuments(query);
 
     const result = [];
     for (let index = 0; index < products.length; index++) {
