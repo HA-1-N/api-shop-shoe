@@ -1,4 +1,5 @@
 const Product = require("../../model/Product");
+const Brand = require("../../model/Brand");
 const {
   productValidation,
 } = require("../../validators/validatorProduct/validationProduct");
@@ -23,6 +24,14 @@ const createProduct = async (req, res) => {
     return res.status(400).send("productCode is already");
   }
 
+  const brand = await Brand.findOne({
+    brandCode: req.body.brandCode,
+  });
+
+  if (!brand) {
+    return res.status(404).json({ message: "Brand not found" });
+  }
+
   const newProduct = new Product({
     productCode: req.body.productCode,
     brandCode: req.body.brandCode,
@@ -37,15 +46,22 @@ const createProduct = async (req, res) => {
 
   try {
     const savedProduct = await newProduct.save();
-    res
-      .status(200)
-      .json({ message: "Create product successfull !", data: savedProduct });
+    res.status(200).json({
+      message: "Create product successfull !",
+      data: {
+        ...savedProduct._doc,
+        brand: {
+          brandCode: brand.brandCode,
+          name: brand.name,
+        },
+      },
+    });
   } catch (error) {
-    res.status(500).json(error);
+    res.status(500).json({ error: error, message: "Internal server error" });
   }
 };
 
-// Filter product
+//Filter product
 const filterProduct = async (req, res) => {
   try {
     // Get the filter criteria from the request body
@@ -61,73 +77,47 @@ const filterProduct = async (req, res) => {
       query.productCode = productCode;
     }
     if (brandCode) {
-      query["brand.code"] = brandCode;
+      query.brandCode = brandCode;
     }
     if (name) {
       query.name = name;
     }
 
-    const pipeline = [
-      { $match: query },
-      {
-        $lookup: {
-          from: "brands",
-          localField: "brand.code",
-          foreignField: "code",
-          as: "brand",
-        },
-      },
-      {
-        $unwind: "$brand",
-      },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          price: 1,
-          "brand.name": 1,
-        },
-      },
-      {
-        $facet: {
-          products: [
-            { $skip: (parseInt(page) - 1) * parseInt(limit) },
-            { $limit: parseInt(limit) },
-          ],
-          total: [
-            {
-              $count: "total",
-            },
-          ],
-        },
-      },
-    ];
-
-    const results = await Product.aggregate(pipeline);
-
     // Query the database to find the matching products
-    // const products = await Product.find(query)
-    //   .skip(startIndex)
-    //   .limit(limit)
-    //   .exec();
+    const products = await Product.find(query)
+      .populate("brand")
+      .skip(startIndex)
+      .limit(limit)
+      .exec();
 
-    // const products = await Product.aggregate(pipeline)
-    //
-    // Calculate the total number of documents matching the filter criteria
-    // const count = await Product.countDocuments(query);
+    const count = await Brand.countDocuments(query);
 
-    // Return the filtered products
-    // Create a response object containing the filtered data and pagination metadata
+    const result = [];
+    for (let index = 0; index < products.length; index++) {
+      const product = products[index];
+      const brand = await Brand.findOne({ brandCode: product.brandCode });
+
+      const productInfo = {
+        ...product._doc,
+        brand: brand,
+      };
+
+      result.push(productInfo);
+    }
+
     const response = {
-      products: results[0].products,
-      total: results[0].total[0].total,
-      page: parseInt(page),
-      limit: parseInt(limit),
+      data: result,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(count / limit),
+        totalItems: count,
+      },
     };
 
     res.status(200).json(response);
   } catch (err) {
     // Return an error response if there was an error
+    console.log("err...", err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
