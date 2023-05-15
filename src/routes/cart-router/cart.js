@@ -2,6 +2,7 @@ const express = require("express");
 const {
   userAddToCart,
   getUserCart,
+  emptyCart,
 } = require("../../controller/cart-controller/CartController");
 const {
   verifyToken,
@@ -13,5 +14,6 @@ const router = express.Router();
 
 router.post("/userCart", verifyToken, userAddToCart);
 router.get("/getUserCart", verifyToken, getUserCart);
+router.delete("/empty-cart", verifyToken, emptyCart);
 
 module.exports = router;

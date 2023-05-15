@@ -80,8 +80,9 @@ const userAddToCart = asyncHandler(async (req, res) => {
   try {
     let products = [];
     const userData = jwt.verify(token, process.env.JWT_SEC);
-    const userName = userData.userName;
-    const alreadyExistCart = await Cart.findOne({ orderBy: userName });
+    const id = userData.id;
+    const alreadyExistCart = await Cart.findOne({ orderBy: id });
+
     if (alreadyExistCart) {
       await alreadyExistCart.remove();
     }
@@ -111,6 +112,7 @@ const userAddToCart = asyncHandler(async (req, res) => {
         price,
       });
     }
+
     let cartTotal = 0;
     for (let i = 0; i < products.length; i++) {
       cartTotal = cartTotal + products[i].price * products[i].count;
@@ -119,7 +121,7 @@ const userAddToCart = asyncHandler(async (req, res) => {
     let newCart = new Cart({
       products: products,
       cartTotal,
-      orderBy: userName,
+      orderBy: id,
     });
 
     const saveUserCart = await newCart.save();
@@ -129,14 +131,14 @@ const userAddToCart = asyncHandler(async (req, res) => {
   }
 });
 
-// get user cart by id
+// get user cart by user name
 const getUserCart = asyncHandler(async (req, res) => {
   const authHeader = req.headers.token;
   const token = authHeader && authHeader.split(" ")[1];
   try {
     const userData = jwt.verify(token, process.env.JWT_SEC);
-    const userName = userData.userName;
-    const cart = await Cart.findOne({ orderby: userName }).populate({
+    const id = userData.id;
+    const cart = await Cart.findOne({ orderBy: id }).populate({
       path: "product",
       model: "Product",
     });
@@ -150,4 +152,19 @@ const getUserCart = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { userAddToCart, getUserCart };
+// delete cart
+const emptyCart = asyncHandler(async (req, res) => {
+  const authHeader = req.headers.token;
+  const token = authHeader && authHeader.split(" ")[1];
+  try {
+    const userData = jwt.verify(token, process.env.JWT_SEC);
+    const id = userData.id;
+    // const user = await User.findById({ id });
+    const cart = await Cart.findOneAndRemove({ orderBy: id });
+    res.status(200).json(cart);
+  } catch (error) {
+    res.status(500).json({ error: error, message: "Internal server error" });
+  }
+});
+
+module.exports = { userAddToCart, getUserCart, emptyCart };
