@@ -5,13 +5,17 @@ const CartSchema = new Schema(
   {
     orderBy: {
       type: String,
-      required: true,
+      // required: true,
       ref: "User",
     },
     products: [
       {
-        product: {
+        productCode: {
           type: String,
+          ref: "Product",
+        },
+        product: {
+          type: Object,
           ref: "Product",
         },
         count: Number,
@@ -25,16 +29,16 @@ const CartSchema = new Schema(
   { timestamps: true }
 );
 
-Cart.virtual("user", {
+CartSchema.virtual("user", {
   ref: "User",
   localField: "orderBy",
   foreignField: "userName",
   justOne: true,
 });
 
-Cart.virtual("product", {
+CartSchema.virtual("product", {
   ref: "Product",
-  localField: "product",
+  localField: "productCode",
   foreignField: "productCode",
   justOne: true,
 });
