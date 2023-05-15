@@ -2,6 +2,7 @@ const asyncHandler = require("express-async-handler");
 const User = require("../../model/User");
 const Cart = require("../../model/Cart");
 const Product = require("../../model/Product");
+const Voucher = require("../../model/Voucher");
 const jwt = require("jsonwebtoken");
 const Brand = require("../../model/Brand");
 
@@ -167,4 +168,37 @@ const emptyCart = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { userAddToCart, getUserCart, emptyCart };
+// add voucher to cart
+const addVoucher = asyncHandler(async (req, res) => {
+  const { voucherCode } = req.body;
+  const authHeader = req.headers.token;
+  const token = authHeader && authHeader.split(" ")[1];
+
+  try {
+    const validVoucher = await Voucher.findOne({ voucherCode: voucherCode });
+    if (validVoucher === null) {
+      throw new Error("Invalid Voucher");
+    }
+    const userData = jwt.verify(token, process.env.JWT_SEC);
+    const id = userData.id;
+    const user = await User.findOne({ _id: id });
+    let { cartTotal } = await Cart.findOne({ orderBy: id }).populate({
+      path: "product",
+      model: "Product",
+    });
+    let totalAfterDiscount = (
+      cartTotal -
+      (cartTotal * validVoucher.discount) / 100
+    ).toFixed(2);
+    const newCart = await Cart.findOneAndUpdate(
+      { orderBy: id },
+      { totalAfterDiscount },
+      { new: true }
+    );
+    res.status(200).json({ message: "Update successful !", data: newCart });
+  } catch (error) {
+    res.status(500).json({ error: error, message: "Internal server error" });
+  }
+});
+
+module.exports = { userAddToCart, getUserCart, emptyCart, addVoucher };
