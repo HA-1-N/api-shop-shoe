@@ -39,7 +39,7 @@ const OrderSchema = new Schema(
 OrderSchema.virtual("user", {
   ref: "User",
   localField: "orderBy",
-  foreignField: "userName",
+  foreignField: "_id",
   justOne: true,
 });
 

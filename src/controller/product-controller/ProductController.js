@@ -131,6 +131,22 @@ const filterProduct = async (req, res) => {
   }
 };
 
+// find product by id
+const findProductByProductCode = async (req, res) => {
+  try {
+    const productCode = req.params.productCode;
+    const product = await Product.findOne({ productCode });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    res.status(200).json(product);
+  } catch (error) {
+    res.status(200).json({ error: "Internal server error" });
+  }
+};
+
 //Update product
 const updateProduct = async (req, res) => {
   const { error } = productValidation(req.body);
@@ -184,4 +200,5 @@ module.exports = {
   filterProduct,
   updateProduct,
   deleteProduct,
+  findProductByProductCode,
 };

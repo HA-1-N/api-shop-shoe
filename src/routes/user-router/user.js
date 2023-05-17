@@ -3,6 +3,7 @@ const express = require("express");
 const {
   filterUser,
   updateUser,
+  getCurrentUser,
 } = require("../../controller/user-controller/UserController");
 const {
   verifyToken,
@@ -11,6 +12,7 @@ const {
 
 const router = express.Router();
 
+router.get("/current-user", getCurrentUser);
 router.post("/filter", verifyTokenAndAdmin, filterUser);
 router.post("/update", verifyTokenAndAdmin, updateUser);
 
