@@ -6,6 +6,8 @@ const routerVoucher = require("./voucher-router/voucher");
 const routerCart = require("./cart-router/cart");
 const routerOrder = require("./order-router/order");
 const routerColor = require("./color-router/color");
+const routerSize = require("./size-router/size");
+const routerCategory = require("./category-router/category");
 
 function route(app) {
   app.use("/api/auth", routerAuth);
@@ -15,8 +17,8 @@ function route(app) {
   app.use("/api/voucher", routerVoucher);
   app.use("/api/cart", routerCart);
   app.use("/api/order", routerOrder);
-  // app.use("/api/size", routerOrder);
-  // app.use("/api/category", routerOrder);
+  app.use("/api/size", routerSize);
+  app.use("/api/category", routerCategory);
   app.use("/api/color", routerColor);
 }
 

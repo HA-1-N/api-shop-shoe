@@ -1,5 +1,8 @@
 const Product = require("../../model/Product");
 const Brand = require("../../model/Brand");
+const Color = require("../../model/Color");
+const Size = require("../../model/Size");
+const Category = require("../../model/Category");
 const {
   productValidation,
 } = require("../../validators/validatorProduct/validationProduct");
@@ -135,13 +138,33 @@ const filterProduct = async (req, res) => {
 const findProductByProductCode = async (req, res) => {
   try {
     const productCode = req.params.productCode;
-    const product = await Product.findOne({ productCode });
+    const product = await Product.findOne({ productCode })
+      .populate("brand")
+      .exec();
+
+    const brand = await Brand.findOne({ brandCode: product.brandCode });
+    const colorArr = product.color;
+    const colors = await Color.find({ colorCode: { $in: colorArr } });
+    const sizeArr = product.size;
+    const sizes = await Size.find({ sizeCode: { $in: sizeArr } });
+    const categoryArr = product.categories;
+    const categoriesArrObj = await Category.find({
+      categoryName: { $in: categoryArr },
+    });
 
     if (!product) {
       return res.status(404).json({ error: "Product not found" });
     }
 
-    res.status(200).json(product);
+    const newProduct = {
+      ...product._doc,
+      brand: brand,
+      colors: colors,
+      sizes: sizes,
+      categoriesArrObj: categoriesArrObj,
+    };
+
+    res.status(200).json(newProduct);
   } catch (error) {
     res.status(200).json({ error: "Internal server error" });
   }
