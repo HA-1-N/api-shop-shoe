@@ -37,11 +37,11 @@ const createBrand = async (req, res) => {
 
   try {
     const savedBrand = await newBrand.save();
-    res
+    return res
       .status(200)
       .json({ message: "Create brand successful !", data: savedBrand });
   } catch (error) {
-    res.status(500).json(error);
+    return res.status(500).json(error);
   }
 };
 
@@ -78,9 +78,9 @@ const filterBrand = async (req, res) => {
       },
     };
 
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -94,7 +94,7 @@ const updateBrand = async (req, res) => {
 
   try {
     const updateBrand = await Brand.findOneAndUpdate(
-      req.params.brandCode,
+      { brandCode: req.params.brandCode },
       {
         $set: req.body,
       },
@@ -104,11 +104,11 @@ const updateBrand = async (req, res) => {
     if (!updateBrand) {
       return res.status(404).send({ message: "Brand not found" });
     }
-    res
+    return res
       .status(200)
       .json({ message: "Update brand successful !", data: updateBrand });
   } catch (error) {
-    res.status(500).json(error);
+    return res.status(500).json(error);
   }
 };
 
@@ -120,14 +120,30 @@ const deleteBrand = async (req, res) => {
       brandCode: brandCodeDelete,
     });
     if (!deletedBrand) {
-      return res.status(404).json({ message: "Brand not found" });
+      return res.status(404).json({ message: "Brand not found !" });
     }
 
     return res
       .status(200)
       .json({ message: "Brand deleted successfully", data: deletedBrand });
   } catch (error) {
-    res.status(500).send({ message: "Internal server error" });
+    return res.status(500).send({ message: "Internal server error" });
+  }
+};
+
+// get brand by brandCode
+const getBrandByCode = async (req, res) => {
+  try {
+    const brandCode = req.body.brandCode;
+    const brand = await Brand.findOne({ brandCode });
+    if (!brand) {
+      return res.status(404).json({ message: "Brand not found !" });
+    }
+    return res.status(200).json(brand);
+  } catch (error) {
+    return res
+      .status(500)
+      .send({ message: "Internal server error", error: error });
   }
 };
 
@@ -136,4 +152,5 @@ module.exports = {
   filterBrand,
   updateBrand,
   deleteBrand,
+  getBrandByCode,
 };

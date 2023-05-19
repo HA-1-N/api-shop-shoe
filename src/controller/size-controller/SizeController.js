@@ -24,16 +24,18 @@ const createSize = async (req, res) => {
   });
 
   if (nameSizeExist) {
-    return res.status(400).send("nameSize of Size is already");
+    return res.status(400).send("sizeName of Size is already");
   }
   const newSize = new Size(req.body);
   try {
     const savedSize = await newSize.save();
-    res
+    return res
       .status(200)
       .json({ message: "Create Size successful !", data: savedSize });
   } catch (error) {
-    res.status(500).json({ error: error, message: "Internal server error" });
+    return res
+      .status(500)
+      .json({ error: error, message: "Internal server error" });
   }
 };
 
@@ -70,10 +72,81 @@ const filterSize = async (req, res) => {
       },
     };
 
-    res.status(200).json(response);
+    return res.status(200).json(response);
   } catch (error) {
-    res.status(500).json({ message: "Internal server error" });
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
 
-module.exports = { createSize, filterSize };
+// Update size
+const updateSize = async (req, res) => {
+  const { error } = sizeValidation(req.body);
+
+  if (error) {
+    return res.status(400).send({ message: error.details[0].message });
+  }
+
+  try {
+    const updateSizeDetail = await Size.findOneAndUpdate(
+      { sizeCode: req.params.sizeCode },
+      {
+        $set: req.body,
+      },
+      { new: true }
+    );
+
+    if (!updateSizeDetail) {
+      return res.status(404).send({ message: "Size not found" });
+    }
+    return res
+      .status(200)
+      .json({ message: "Update size successful !", data: updateSizeDetail });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
+// Delete size
+const deleteSize = async (req, res) => {
+  try {
+    const { sizeCode } = req.body;
+    const deleteSize = await Size.findOneAndDelete({
+      sizeCode: sizeCode,
+    });
+    if (!deleteSize) {
+      return res.status(404).json({ message: "Size not found" });
+    }
+    return res
+      .status(200)
+      .json({ message: "Delete size successfull", data: deleteSize });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Internal error server" });
+  }
+};
+
+// Delete size
+const getSizeByCode = async (req, res) => {
+  try {
+    const { sizeCode } = req.body;
+    const size = await Size.findOne({
+      sizeCode: sizeCode,
+    });
+    if (!size) {
+      return res.status(404).json({ message: "Size not found" });
+    }
+    return res
+      .status(200)
+      .json({ message: "Delete size successfull", data: size });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal error server" });
+  }
+};
+
+module.exports = {
+  createSize,
+  filterSize,
+  updateSize,
+  deleteSize,
+  getSizeByCode,
+};

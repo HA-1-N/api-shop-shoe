@@ -69,4 +69,75 @@ const filterCategory = async (req, res) => {
   }
 };
 
-module.exports = { createCategory, filterCategory };
+// Update category
+const updateCategory = async (req, res) => {
+  const { error } = categoryValidation(req.body);
+
+  if (error) {
+    return res.status(400).send({ message: error.details[0].message });
+  }
+
+  try {
+    const newCategory = await Category.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: req.body,
+      },
+      { new: true }
+    );
+
+    if (!newCategory) {
+      return res.status(404).send({ message: "Category not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Update category successful !", data: newCategory });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ error: error, message: "Internal error server" });
+  }
+};
+
+// Delete category
+const deleteCategory = async (req, res) => {
+  try {
+    const { categoryName } = req.body;
+    const deleteCategory = await Category.findOneAndDelete({
+      categoryName: categoryName,
+    });
+    if (!deleteCategory) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    return res
+      .status(200)
+      .json({ message: "Delete category successfull", data: deleteCategory });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal error server" });
+  }
+};
+
+// get category by name
+const getCategoryByName = async (req, res) => {
+  try {
+    const { categoryName } = req.body;
+    const category = await Category.findOne({
+      categoryName: categoryName,
+    });
+    if (!category) {
+      return res.status(404).json({ message: "Category not found" });
+    }
+    return res.status(200).json({ message: "Ssuccessfull", data: category });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal error server" });
+  }
+};
+
+module.exports = {
+  createCategory,
+  filterCategory,
+  updateCategory,
+  deleteCategory,
+  getCategoryByName,
+};

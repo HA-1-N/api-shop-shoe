@@ -3,6 +3,9 @@ const express = require("express");
 const {
   createSize,
   filterSize,
+  updateSize,
+  deleteSize,
+  getSizeByCode,
 } = require("../../controller/size-controller/SizeController");
 const {
   verifyToken,
@@ -12,5 +15,8 @@ const router = express.Router();
 
 router.post("/create", verifyTokenAndAdmin, createSize);
 router.post("/filter", verifyTokenAndAdmin, filterSize);
+router.post("/update/:sizeCode", verifyTokenAndAdmin, updateSize);
+router.post("/delete", verifyTokenAndAdmin, deleteSize);
+router.post("/getSizeByCode", verifyTokenAndAdmin, getSizeByCode);
 
 module.exports = router;

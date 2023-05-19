@@ -108,10 +108,21 @@ const filterProduct = async (req, res) => {
     for (let index = 0; index < products.length; index++) {
       const product = products[index];
       const brand = await Brand.findOne({ brandCode: product.brandCode });
+      const colorArr = product.color;
+      const colors = await Color.find({ colorCode: { $in: colorArr } });
+      const sizeArr = product.size;
+      const sizes = await Size.find({ sizeCode: { $in: sizeArr } });
+      const categoryArr = product.categories;
+      const categoriesArrObj = await Category.find({
+        categoryName: { $in: categoryArr },
+      });
 
       const productInfo = {
         ...product._doc,
         brand: brand,
+        colors: colors,
+        sizes: sizes,
+        categoriesArrObj: categoriesArrObj,
       };
 
       result.push(productInfo);
@@ -130,7 +141,7 @@ const filterProduct = async (req, res) => {
   } catch (err) {
     // Return an error response if there was an error
     console.log("err...", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error: error });
   }
 };
 

@@ -77,4 +77,73 @@ const filterColor = async (req, res) => {
   }
 };
 
-module.exports = { createColor, filterColor };
+// UPDATE
+const updateColor = async (req, res) => {
+  const { error } = colorValidation(req.body);
+
+  if (error) {
+    return res.status(400).send({ message: error.details[0].message });
+  }
+
+  try {
+    const updateColor = await Color.findOneAndUpdate(
+      { colorCode: req.params.colorCode },
+      req.body,
+      { new: true }
+    );
+
+    if (!updateColor) {
+      return res.status(404).send({ message: "Color not found" });
+    }
+    return res
+      .status(200)
+      .json({ message: "Update color successful !", data: updateColor });
+  } catch (error) {
+    return res.status(500).json(error);
+  }
+};
+
+// Delete
+const deleteColor = async (req, res) => {
+  try {
+    const colorCodeDelete = req.body.colorCode;
+    const deletedColor = await Color.findOneAndDelete({
+      colorCode: colorCodeDelete,
+    });
+    if (!deletedColor) {
+      return res.status(404).json({ message: "Color not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Color deleted successful", data: deletedColor });
+  } catch (error) {
+    return res.status(500).send({ message: "Internal server error" });
+  }
+};
+
+const getColorByCode = async (req, res) => {
+  try {
+    const colorCode = req.body.colorCode;
+    const color = await Color.findOne({
+      colorCode: colorCode,
+    });
+    if (!color) {
+      return res.status(404).json({ message: "Color not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ message: "Color deleted successful", data: color });
+  } catch (error) {
+    return res.status(500).send({ message: "Internal server error" });
+  }
+};
+
+module.exports = {
+  createColor,
+  filterColor,
+  updateColor,
+  deleteColor,
+  getColorByCode,
+};

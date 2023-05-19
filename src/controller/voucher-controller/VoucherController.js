@@ -79,7 +79,7 @@ const updateVoucher = async (req, res) => {
 
   try {
     const updateVoucher = await Brand.findOneAndUpdate(
-      req.params.voucherCode,
+      { voucherCode: req.params.voucherCode },
       {
         $set: req.body,
       },
