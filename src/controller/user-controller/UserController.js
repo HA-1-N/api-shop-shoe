@@ -47,8 +47,15 @@ const updateUser = async (req, res) => {
     return res.status(400).send({ message: error.details[0].message });
   }
 
+  if (req.body.password) {
+    req.body.password = CryptoJS.AES.encrypt(
+      req.body.password,
+      process.env.PASS_SEC
+    ).toString();
+  }
+
   try {
-    const updateUser = await Brand.findOneAndUpdate(
+    const updateUser = await User.findOneAndUpdate(
       req.params.id,
       {
         $set: req.body,
@@ -57,11 +64,11 @@ const updateUser = async (req, res) => {
     );
 
     if (!updateUser) {
-      return res.status(404).send({ message: "Brand not found" });
+      return res.status(404).send({ message: "User not found" });
     }
     res
       .status(200)
-      .json({ message: "Update brand successful !", data: updateUser });
+      .json({ message: "Update user successful !", data: updateUser });
   } catch (error) {
     res.status(500).json(error);
   }
@@ -70,7 +77,7 @@ const updateUser = async (req, res) => {
 // get current user
 const getCurrentUser = async (req, res) => {
   try {
-    const currentUser = req.user;
+    const currentUser = await User.findById(req.params.id);
     res.status(200).json({ user: currentUser });
   } catch (error) {
     console.error(error.message);

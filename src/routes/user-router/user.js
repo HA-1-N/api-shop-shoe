@@ -12,7 +12,7 @@ const {
 
 const router = express.Router();
 
-router.get("/current-user", getCurrentUser);
+router.get("/current-user/:id", getCurrentUser);
 router.post("/filter", verifyTokenAndAdmin, filterUser);
 router.post("/update", verifyTokenAndAdmin, updateUser);
 
