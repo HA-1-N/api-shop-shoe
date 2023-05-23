@@ -2,6 +2,7 @@ const User = require("../../model/User");
 const {
   userValidation,
 } = require("../../validators/validationUser/validationUser");
+const CryptoJS = require("crypto-js");
 
 // Filter
 const filterUser = async (req, res) => {
@@ -55,7 +56,7 @@ const updateUser = async (req, res) => {
   }
 
   try {
-    const updateUser = await User.findOneAndUpdate(
+    const updateUser = await User.findByIdAndUpdate(
       req.params.id,
       {
         $set: req.body,
