@@ -140,7 +140,6 @@ const filterProduct = async (req, res) => {
     res.status(200).json(response);
   } catch (err) {
     // Return an error response if there was an error
-    console.log("err...", err);
     res.status(500).json({ message: "Internal server error", error: error });
   }
 };

@@ -76,14 +76,13 @@ const Brand = require("../../model/Brand");
 
 const userAddToCart = asyncHandler(async (req, res) => {
   const { cart } = req.body;
-  const authHeader = req.headers.token;
+  const authHeader = req?.headers.token;
   const token = authHeader && authHeader.split(" ")[1];
   try {
     let products = [];
     const userData = jwt.verify(token, process.env.JWT_SEC);
     const id = userData.id;
     const alreadyExistCart = await Cart.findOne({ orderBy: id });
-
     if (alreadyExistCart) {
       await alreadyExistCart.remove();
     }
@@ -134,7 +133,7 @@ const userAddToCart = asyncHandler(async (req, res) => {
 
 // get user cart by user name
 const getUserCart = asyncHandler(async (req, res) => {
-  const authHeader = req.headers.token;
+  const authHeader = req?.headers.token;
   const token = authHeader && authHeader.split(" ")[1];
   try {
     const userData = jwt.verify(token, process.env.JWT_SEC);
@@ -153,9 +152,37 @@ const getUserCart = asyncHandler(async (req, res) => {
   }
 });
 
+// update cart
+// const updateCart = asyncHandler(async (req, res) => {
+//   const authHeader = req.headers.token;
+//   const token = authHeader && authHeader.split(" ")[1];
+//   try {
+//     const userData = jwt.verify(token, process.env.JWT_SEC);
+//     const id = userData.id;
+//     const cart = await Cart.findOne({ orderBy: id }).populate({
+//       path: "product",
+//       model: "Product",
+//     });
+
+//     for (let index = 0; index < cart.length; index++) {
+//       const productCode = cart[i].productCode;
+//       const product = await Product.findOneAndUpdate(
+//         { productCode: productCode },
+//         req.body,
+//         { new: true }
+//       )
+//         .select("-_id -__v")
+//         .populate("brand")
+//         .exec();
+//     }
+//   } catch (error) {
+//     res.status(500).json({ message: "Internal server error", error: error });
+//   }
+// });
+
 // delete cart
 const emptyCart = asyncHandler(async (req, res) => {
-  const authHeader = req.headers.token;
+  const authHeader = req?.headers.token;
   const token = authHeader && authHeader.split(" ")[1];
   try {
     const userData = jwt.verify(token, process.env.JWT_SEC);
@@ -171,7 +198,7 @@ const emptyCart = asyncHandler(async (req, res) => {
 // add voucher to cart
 const addVoucher = asyncHandler(async (req, res) => {
   const { voucherCode } = req.body;
-  const authHeader = req.headers.token;
+  const authHeader = req?.headers.token;
   const token = authHeader && authHeader.split(" ")[1];
 
   try {

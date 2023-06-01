@@ -1,18 +1,16 @@
+const { string } = require("joi");
 const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 
 const OrderSchema = new Schema(
   {
-    products: [
-      {
-        product: {
-          type: String,
-          ref: "Product",
-        },
-        count: Number,
-        color: String,
-      },
-    ],
+    orderby: {
+      type: String,
+      ref: "User",
+    },
+    products: {
+      type: Array,
+    },
     paymentIntent: {},
     orderStatus: {
       type: String,
@@ -25,10 +23,6 @@ const OrderSchema = new Schema(
         "Cancelled",
         "Delivered",
       ],
-    },
-    orderby: {
-      type: String,
-      ref: "User",
     },
   },
   {
