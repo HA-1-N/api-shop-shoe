@@ -11,7 +11,12 @@ const router = require("express").Router();
 
 // CREATE
 const createProduct = async (req, res) => {
-  const { error } = productValidation(req.body);
+  let size = req.body.size;
+  if (size && typeof size === "string") {
+    size = size.split(",").map(Number);
+  }
+
+  const { error } = productValidation({ ...req.body, size });
 
   if (error) {
     return res.status(400).send(error.details[0].message);
@@ -38,14 +43,28 @@ const createProduct = async (req, res) => {
   const newProduct = new Product({
     productCode: req.body.productCode,
     brandCode: req.body.brandCode,
-    image: req.body.image,
     name: req.body.name,
-    size: req.body.size,
+    size: size,
     color: req.body.color,
     price: req.body.price,
     categories: req.body.categories,
     description: req.body.description,
   });
+
+  // if (req.file) {
+  //   newProduct.image = req.file.path;
+  // } else {
+  //   return res.status(400).send("Image file is required.");
+  // }
+
+  if (req.files) {
+    let path = "";
+    req.files.forEach((file, index, arr) => {
+      path = path + file.path + ",";
+    });
+    path = path.substring(0, path.lastIndexOf(","));
+    newProduct.image = path;
+  }
 
   try {
     const savedProduct = await newProduct.save();
