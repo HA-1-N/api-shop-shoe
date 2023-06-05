@@ -87,7 +87,7 @@ const createProduct = async (req, res) => {
 const filterProduct = async (req, res) => {
   try {
     // Get the filter criteria from the request body
-    const { productCode, brandCode, name, color, size } = req.body;
+    const { productCode, brandCode, name, color, size, price } = req.body;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const startIndex = (page - 1) * limit;
@@ -95,14 +95,21 @@ const filterProduct = async (req, res) => {
 
     // Build the query based on the filter criteria
     const query = {};
-    if (productCode) {
-      query.productCode = productCode;
+
+    if (productCode && productCode.trim().length > 0) {
+      query.productCode = {
+        $regex: ".*" + productCode.trim() + ".*",
+        $options: "i",
+      };
     }
-    if (brandCode) {
-      query.brandCode = brandCode;
+    if (brandCode && brandCode.trim().length > 0) {
+      query.brandCode = {
+        $regex: ".*" + brandCode.trim() + ".*",
+        $options: "i",
+      };
     }
-    if (name) {
-      query.name = name;
+    if (name && name.trim().length > 0) {
+      query.name = { $regex: ".*" + name.trim() + ".*", $options: "i" };
     }
 
     if (color && color.length > 0) {
@@ -111,6 +118,17 @@ const filterProduct = async (req, res) => {
 
     if (size && size.length > 0) {
       query.size = { $in: size };
+    }
+
+    if (price) {
+      const priceFilter = {};
+      if (price.min) {
+        priceFilter.$gte = parseInt(price.min);
+      }
+      if (price.max) {
+        priceFilter.$lte = parseInt(price.max);
+      }
+      query.price = priceFilter;
     }
 
     // Query the database to find the matching products
@@ -159,7 +177,7 @@ const filterProduct = async (req, res) => {
     res.status(200).json(response);
   } catch (err) {
     // Return an error response if there was an error
-    res.status(500).json({ message: "Internal server error", error: error });
+    res.status(500).json({ message: "Internal server error", error: err });
   }
 };
 

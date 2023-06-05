@@ -14,7 +14,7 @@ const {
 const router = express.Router();
 
 router.post("/create", verifyTokenAndAdmin, createSize);
-router.post("/filter", verifyTokenAndAdmin, filterSize);
+router.post("/filter", filterSize);
 router.post("/update/:sizeCode", verifyTokenAndAdmin, updateSize);
 router.post("/delete", verifyTokenAndAdmin, deleteSize);
 router.post("/getSizeByCode", verifyTokenAndAdmin, getSizeByCode);

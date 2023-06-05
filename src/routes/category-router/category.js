@@ -11,7 +11,7 @@ const { verifyTokenAndAdmin } = require("../../middlewares/auth/authorization");
 
 const router = express.Router();
 router.post("/create", verifyTokenAndAdmin, createCategory);
-router.post("/filter", verifyTokenAndAdmin, filterCategory);
+router.post("/filter", filterCategory);
 router.post("/update/:id", verifyTokenAndAdmin, updateCategory);
 router.post("/delete", verifyTokenAndAdmin, deleteCategory);
 router.post("/getCategoryByName", verifyTokenAndAdmin, getCategoryByName);
