@@ -86,11 +86,9 @@ const updateColor = async (req, res) => {
   }
 
   try {
-    const updateColor = await Color.findOneAndUpdate(
-      { colorCode: req.params.colorCode },
-      req.body,
-      { new: true }
-    );
+    const updateColor = await Color.findByIdAndUpdate(req.params.id, req.body, {
+      new: true,
+    });
 
     if (!updateColor) {
       return res.status(404).send({ message: "Color not found" });

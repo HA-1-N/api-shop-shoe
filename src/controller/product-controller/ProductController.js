@@ -58,12 +58,13 @@ const createProduct = async (req, res) => {
   // }
 
   if (req.files) {
-    let path = "";
-    req.files.forEach((file, index, arr) => {
-      path = path + file.path + ",";
-    });
-    path = path.substring(0, path.lastIndexOf(","));
-    newProduct.image = path;
+    // let path = "";
+    // req.files.forEach((file, index, arr) => {
+    //   path = path + file.path + ",";
+    // });
+    // path = path.substring(0, path.lastIndexOf(","));
+    const images = req.files.map((item) => item?.path);
+    newProduct.image = images;
   }
 
   try {

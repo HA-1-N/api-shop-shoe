@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.post("/create", verifyTokenAndAdmin, createColor);
 router.post("/filter", filterColor);
-router.post("/update/:colorCode", verifyTokenAndAdmin, updateColor);
+router.post("/update/:id", verifyTokenAndAdmin, updateColor);
 router.post("/delete", verifyTokenAndAdmin, deleteColor);
 router.post("/getColorByCode", verifyTokenAndAdmin, getColorByCode);
 

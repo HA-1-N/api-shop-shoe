@@ -4,12 +4,14 @@ const productValidation = (data) => {
   const schema = Joi.object({
     productCode: Joi.string().required(),
     brandCode: Joi.string().required(),
-    image: Joi.string().custom((value, helpers) => {
-      if (!value.match(/\.(jpg|jpeg|png)$/)) {
-        return helpers.error("any.invalid");
-      }
-      return value;
-    }, "image format validation"),
+    image: Joi.array().items(
+      Joi.string().custom((value, helpers) => {
+        if (!value.match(/\.(jpg|jpeg|png)$/)) {
+          return helpers.error("any.invalid");
+        }
+        return value;
+      }, "image format validation")
+    ),
     name: Joi.string().required(),
     price: Joi.number().integer().required(),
     size: Joi.array()
