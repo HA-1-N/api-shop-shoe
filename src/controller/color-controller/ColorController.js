@@ -132,7 +132,7 @@ const getColorByCode = async (req, res) => {
 
     return res
       .status(200)
-      .json({ message: "Color deleted successful", data: color });
+      .json({ message: "Get color by code successful", data: color });
   } catch (error) {
     return res.status(500).send({ message: "Internal server error" });
   }

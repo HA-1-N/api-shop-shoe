@@ -125,7 +125,7 @@ const deleteSize = async (req, res) => {
   }
 };
 
-// Delete size
+// Get size by code
 const getSizeByCode = async (req, res) => {
   try {
     const { sizeCode } = req.body;
@@ -137,7 +137,7 @@ const getSizeByCode = async (req, res) => {
     }
     return res
       .status(200)
-      .json({ message: "Delete size successfull", data: size });
+      .json({ message: "Get size by code successfull", data: size });
   } catch (error) {
     return res.status(500).json({ message: "Internal error server" });
   }
