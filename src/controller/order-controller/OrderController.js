@@ -61,7 +61,20 @@ const createOder = asyncHandler(async (req, res) => {
   }
 });
 
-// get Orders
+const getAllOrders = asyncHandler(async (req, res) => {
+  try {
+    const allUserOrders = await Order.find()
+      .populate("products.product")
+      .populate("orderby")
+      .exec();
+    res.status(200).json({ data: allUserOrders });
+  } catch (error) {
+    res.status(500).json({ error: error, message: "Internal server error" });
+    // throw new Error(error);
+  }
+});
+
+// get Orders by user id
 const getOrders = asyncHandler(async (req, res) => {
   try {
     const authHeader = req?.headers.token;
@@ -73,6 +86,26 @@ const getOrders = asyncHandler(async (req, res) => {
       .populate("products.product")
       .populate("orderby")
       .exec();
+    res.status(200).json({ data: userOrders });
+  } catch (error) {
+    res.status(500).json({ error: error, message: "Internal server error" });
+  }
+});
+
+// get Orders by id
+const getOrderById = asyncHandler(async (req, res) => {
+  try {
+    const authHeader = req?.headers.token;
+    const token = authHeader && authHeader.split(" ")[1];
+    const userData = jwt.verify(token, process.env.JWT_SEC);
+    const id = userData.id;
+
+    const userOrders = await Order.findById(req.params.id)
+      .populate("products.product")
+      .populate("orderby")
+      .exec();
+
+    console.log("userOrders...", userOrders);
     res.status(200).json({ data: userOrders });
   } catch (error) {
     res.status(500).json({ error: error, message: "Internal server error" });
@@ -101,4 +134,10 @@ const updateOrderStatus = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { createOder, getOrders, updateOrderStatus };
+module.exports = {
+  createOder,
+  getAllOrders,
+  getOrders,
+  updateOrderStatus,
+  getOrderById,
+};
