@@ -4,6 +4,7 @@ const {
   getUserCart,
   emptyCart,
   addVoucher,
+  updateCart,
 } = require("../../controller/cart-controller/CartController");
 const {
   verifyToken,
@@ -17,5 +18,6 @@ router.post("/userCart", verifyToken, userAddToCart);
 router.get("/getUserCart", verifyToken, getUserCart);
 router.delete("/empty-cart", verifyToken, emptyCart);
 router.post("/apply-voucher", verifyToken, addVoucher);
+router.post("/update-cart", verifyToken, updateCart);
 
 module.exports = router;

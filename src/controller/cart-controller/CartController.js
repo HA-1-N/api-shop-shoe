@@ -82,10 +82,6 @@ const userAddToCart = asyncHandler(async (req, res) => {
     let products = [];
     const userData = jwt.verify(token, process.env.JWT_SEC);
     const id = userData.id;
-    const alreadyExistCart = await Cart.findOne({ orderBy: id });
-    if (alreadyExistCart) {
-      await alreadyExistCart.remove();
-    }
 
     for (let i = 0; i < cart.length; i++) {
       const productCode = cart[i].productCode;
@@ -99,7 +95,7 @@ const userAddToCart = asyncHandler(async (req, res) => {
           .status(404)
           .json({ error: `Product not found: ${productCode}` });
       }
-      const { count, color } = cart[i];
+      const { count, color, size } = cart[i];
       const price = product.price;
       products.push({
         productCode: productCode,
@@ -110,6 +106,7 @@ const userAddToCart = asyncHandler(async (req, res) => {
         count,
         color,
         price,
+        size,
       });
     }
 
@@ -118,14 +115,22 @@ const userAddToCart = asyncHandler(async (req, res) => {
       cartTotal = cartTotal + products[i].price * products[i].count;
     }
 
-    let newCart = new Cart({
-      products: products,
-      cartTotal,
-      orderBy: id,
-    });
+    const alreadyExistCart = await Cart.findOne({ orderBy: id });
 
-    const saveUserCart = await newCart.save();
-    res.status(200).json(saveUserCart);
+    if (alreadyExistCart) {
+      alreadyExistCart.products = alreadyExistCart.products.concat(products);
+      alreadyExistCart.cartTotal += cartTotal;
+      await alreadyExistCart.save();
+      res.status(200).json(alreadyExistCart);
+    } else {
+      let newCart = new Cart({
+        products: products,
+        cartTotal,
+        orderBy: id,
+      });
+      const saveUserCart = await newCart.save();
+      res.status(200).json(saveUserCart);
+    }
   } catch (error) {
     res.status(500).json({ error: error, message: "Internal server error" });
   }
@@ -153,32 +158,78 @@ const getUserCart = asyncHandler(async (req, res) => {
 });
 
 // update cart
-// const updateCart = asyncHandler(async (req, res) => {
-//   const authHeader = req.headers.token;
-//   const token = authHeader && authHeader.split(" ")[1];
-//   try {
-//     const userData = jwt.verify(token, process.env.JWT_SEC);
-//     const id = userData.id;
-//     const cart = await Cart.findOne({ orderBy: id }).populate({
-//       path: "product",
-//       model: "Product",
-//     });
+const updateCart = asyncHandler(async (req, res) => {
+  const { cart } = req.body;
+  const authHeader = req?.headers.token;
+  const token = authHeader && authHeader.split(" ")[1];
+  try {
+    const userData = jwt.verify(token, process.env.JWT_SEC);
+    const id = userData.id;
 
-//     for (let index = 0; index < cart.length; index++) {
-//       const productCode = cart[i].productCode;
-//       const product = await Product.findOneAndUpdate(
-//         { productCode: productCode },
-//         req.body,
-//         { new: true }
-//       )
-//         .select("-_id -__v")
-//         .populate("brand")
-//         .exec();
-//     }
-//   } catch (error) {
-//     res.status(500).json({ message: "Internal server error", error: error });
-//   }
-// });
+    let existingCart = await Cart.findOne({ orderBy: id });
+
+    if (!existingCart) {
+      return res.status(404).json({ error: "Cart not found" });
+    }
+
+    for (let i = 0; i < cart.length; i++) {
+      const { productCode, count } = cart[i];
+      const product = await Product.findOne({ productCode })
+        .select("-_id -__v")
+        .populate("brand")
+        .exec();
+      const brand = await Brand.findOne({ brandCode: product.brandCode });
+      if (!product) {
+        return res
+          .status(404)
+          .json({ error: `Product not found: ${productCode}` });
+      }
+
+      const existingProductIndex = existingCart.products.findIndex(
+        (p) => p.productCode === productCode
+      );
+
+      if (existingProductIndex !== -1) {
+        if (count <= 0) {
+          existingCart.products.splice(existingProductIndex, 1); // Remove the item from the cart
+        } else {
+          existingCart.products[existingProductIndex].count = count; // Update the quantity of the item in the cart
+        }
+      } else {
+        const { color, size } = cart[i];
+        const price = product.price;
+
+        existingCart.products.push({
+          productCode: productCode,
+          product: {
+            ...product._doc,
+            brand: brand,
+          },
+          count,
+          color,
+          price,
+          size,
+        });
+      }
+    }
+
+    let cartTotal = 0;
+    for (let i = 0; i < existingCart.products.length; i++) {
+      const { price, count } = existingCart.products[i];
+      cartTotal += price * count;
+    }
+
+    existingCart.cartTotal = cartTotal;
+
+    await existingCart.save();
+
+    res
+      .status(200)
+      .json({ message: "Update cart successful", data: existingCart });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error", error: error });
+  }
+});
 
 // delete cart
 const emptyCart = asyncHandler(async (req, res) => {
@@ -228,4 +279,10 @@ const addVoucher = asyncHandler(async (req, res) => {
   }
 });
 
-module.exports = { userAddToCart, getUserCart, emptyCart, addVoucher };
+module.exports = {
+  userAddToCart,
+  getUserCart,
+  emptyCart,
+  addVoucher,
+  updateCart,
+};
