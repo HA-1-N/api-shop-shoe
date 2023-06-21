@@ -11,7 +11,7 @@ const Order = require("../../model/Order");
 
 // create order
 const createOder = asyncHandler(async (req, res) => {
-  const { COD, couponApplied } = req.body;
+  const { COD, couponApplied, address } = req.body;
   const authHeader = req?.headers.token;
   const token = authHeader && authHeader.split(" ")[1];
   try {
@@ -39,6 +39,7 @@ const createOder = asyncHandler(async (req, res) => {
       },
       orderby: user.id,
       orderStatus: "Cash on Delivery",
+      address: address,
     });
 
     let update = userCart.products.map((item) => {

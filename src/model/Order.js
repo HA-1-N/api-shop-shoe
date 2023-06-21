@@ -24,6 +24,9 @@ const OrderSchema = new Schema(
         "Delivered",
       ],
     },
+    address: {
+      type: String,
+    },
   },
   {
     timestamps: true,
