@@ -3,9 +3,11 @@ const Brand = require("../../model/Brand");
 const Color = require("../../model/Color");
 const Size = require("../../model/Size");
 const Category = require("../../model/Category");
+
 const {
   productValidation,
 } = require("../../validators/validatorProduct/validationProduct");
+const { cloudinary } = require("../../config/cloudinary/cloundinary");
 
 const router = require("express").Router();
 
@@ -65,6 +67,16 @@ const createProduct = async (req, res) => {
     // path = path.substring(0, path.lastIndexOf(","));
     const images = req.files.map((item) => item?.path);
     newProduct.image = images;
+
+    // Upload images to Cloudinary
+    const cloudinaryUploads = [];
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const uploadResult = await cloudinary.uploader.upload(file.path);
+      cloudinaryUploads.push(uploadResult.secure_url);
+    }
+
+    newProduct.image = cloudinaryUploads;
   }
 
   try {
@@ -266,10 +278,25 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// Get image
+// const getImageFromCloudinary = async (req, res) => {
+//   try {
+//     const { publicId } = req.params;
+
+//     // Fetch image URL from Cloudinary
+//     const image = await cloudinary.image(publicId);
+
+//     res.status(200).json({ image });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 module.exports = {
   createProduct,
   filterProduct,
   updateProduct,
   deleteProduct,
   findProductByProductCode,
+  // getImageFromCloudinary,
 };
