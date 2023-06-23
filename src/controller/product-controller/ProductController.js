@@ -1,14 +1,24 @@
 const Product = require("../../model/Product");
 const Brand = require("../../model/Brand");
+const Color = require("../../model/Color");
+const Size = require("../../model/Size");
+const Category = require("../../model/Category");
+
 const {
   productValidation,
 } = require("../../validators/validatorProduct/validationProduct");
+const { cloudinary } = require("../../config/cloudinary/cloundinary");
 
 const router = require("express").Router();
 
 // CREATE
 const createProduct = async (req, res) => {
-  const { error } = productValidation(req.body);
+  let size = req.body.size;
+  if (size && typeof size === "string") {
+    size = size.split(",").map(Number);
+  }
+
+  const { error } = productValidation({ ...req.body, size });
 
   if (error) {
     return res.status(400).send(error.details[0].message);
@@ -35,14 +45,39 @@ const createProduct = async (req, res) => {
   const newProduct = new Product({
     productCode: req.body.productCode,
     brandCode: req.body.brandCode,
-    image: req.body.image,
     name: req.body.name,
-    size: req.body.size,
+    size: size,
     color: req.body.color,
     price: req.body.price,
     categories: req.body.categories,
     description: req.body.description,
   });
+
+  // if (req.file) {
+  //   newProduct.image = req.file.path;
+  // } else {
+  //   return res.status(400).send("Image file is required.");
+  // }
+
+  if (req.files) {
+    // let path = "";
+    // req.files.forEach((file, index, arr) => {
+    //   path = path + file.path + ",";
+    // });
+    // path = path.substring(0, path.lastIndexOf(","));
+    const images = req.files.map((item) => item?.path);
+    newProduct.image = images;
+
+    // Upload images to Cloudinary
+    const cloudinaryUploads = [];
+    for (let i = 0; i < req.files.length; i++) {
+      const file = req.files[i];
+      const uploadResult = await cloudinary.uploader.upload(file.path);
+      cloudinaryUploads.push(uploadResult.secure_url);
+    }
+
+    newProduct.image = cloudinaryUploads;
+  }
 
   try {
     const savedProduct = await newProduct.save();
@@ -65,7 +100,7 @@ const createProduct = async (req, res) => {
 const filterProduct = async (req, res) => {
   try {
     // Get the filter criteria from the request body
-    const { productCode, brandCode, name, color, size } = req.body;
+    const { productCode, brandCode, name, color, size, price } = req.body;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const startIndex = (page - 1) * limit;
@@ -73,14 +108,21 @@ const filterProduct = async (req, res) => {
 
     // Build the query based on the filter criteria
     const query = {};
-    if (productCode) {
-      query.productCode = productCode;
+
+    if (productCode && productCode.trim().length > 0) {
+      query.productCode = {
+        $regex: ".*" + productCode.trim() + ".*",
+        $options: "i",
+      };
     }
-    if (brandCode) {
-      query.brandCode = brandCode;
+    if (brandCode && brandCode.trim().length > 0) {
+      query.brandCode = {
+        $regex: ".*" + brandCode.trim() + ".*",
+        $options: "i",
+      };
     }
-    if (name) {
-      query.name = name;
+    if (name && name.trim().length > 0) {
+      query.name = { $regex: ".*" + name.trim() + ".*", $options: "i" };
     }
 
     if (color && color.length > 0) {
@@ -89,6 +131,17 @@ const filterProduct = async (req, res) => {
 
     if (size && size.length > 0) {
       query.size = { $in: size };
+    }
+
+    if (price) {
+      const priceFilter = {};
+      if (price.min) {
+        priceFilter.$gte = parseInt(price.min);
+      }
+      if (price.max) {
+        priceFilter.$lte = parseInt(price.max);
+      }
+      query.price = priceFilter;
     }
 
     // Query the database to find the matching products
@@ -105,10 +158,21 @@ const filterProduct = async (req, res) => {
     for (let index = 0; index < products.length; index++) {
       const product = products[index];
       const brand = await Brand.findOne({ brandCode: product.brandCode });
+      const colorArr = product.color;
+      const colors = await Color.find({ colorCode: { $in: colorArr } });
+      const sizeArr = product.size;
+      const sizes = await Size.find({ sizeCode: { $in: sizeArr } });
+      const categoryArr = product.categories;
+      const categoriesArrObj = await Category.find({
+        categoryName: { $in: categoryArr },
+      });
 
       const productInfo = {
         ...product._doc,
         brand: brand,
+        colors: colors,
+        sizes: sizes,
+        categoriesArrObj: categoriesArrObj,
       };
 
       result.push(productInfo);
@@ -126,8 +190,43 @@ const filterProduct = async (req, res) => {
     res.status(200).json(response);
   } catch (err) {
     // Return an error response if there was an error
-    console.log("err...", err);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ message: "Internal server error", error: err });
+  }
+};
+
+// find product by id
+const findProductByProductCode = async (req, res) => {
+  try {
+    const productCode = req.params.productCode;
+    const product = await Product.findOne({ productCode })
+      .populate("brand")
+      .exec();
+
+    const brand = await Brand.findOne({ brandCode: product.brandCode });
+    const colorArr = product.color;
+    const colors = await Color.find({ colorCode: { $in: colorArr } });
+    const sizeArr = product.size;
+    const sizes = await Size.find({ sizeCode: { $in: sizeArr } });
+    const categoryArr = product.categories;
+    const categoriesArrObj = await Category.find({
+      categoryName: { $in: categoryArr },
+    });
+
+    if (!product) {
+      return res.status(404).json({ error: "Product not found" });
+    }
+
+    const newProduct = {
+      ...product._doc,
+      brand: brand,
+      colors: colors,
+      sizes: sizes,
+      categoriesArrObj: categoriesArrObj,
+    };
+
+    res.status(200).json(newProduct);
+  } catch (error) {
+    res.status(200).json({ error: "Internal server error" });
   }
 };
 
@@ -179,9 +278,25 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+// Get image
+// const getImageFromCloudinary = async (req, res) => {
+//   try {
+//     const { publicId } = req.params;
+
+//     // Fetch image URL from Cloudinary
+//     const image = await cloudinary.image(publicId);
+
+//     res.status(200).json({ image });
+//   } catch (error) {
+//     res.status(500).json({ error: error.message });
+//   }
+// };
+
 module.exports = {
   createProduct,
   filterProduct,
   updateProduct,
   deleteProduct,
+  findProductByProductCode,
+  // getImageFromCloudinary,
 };

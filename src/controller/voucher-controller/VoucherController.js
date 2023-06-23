@@ -78,8 +78,8 @@ const updateVoucher = async (req, res) => {
   }
 
   try {
-    const updateVoucher = await Brand.findOneAndUpdate(
-      req.params.voucherCode,
+    const updateVoucher = await Voucher.findOneAndUpdate(
+      { voucherCode: req.params.voucherCode },
       {
         $set: req.body,
       },
@@ -101,7 +101,7 @@ const updateVoucher = async (req, res) => {
 const deleteVoucher = async (req, res) => {
   try {
     const voucherCodeDelete = req.body.voucherCode;
-    const deletedVoucher = await Brand.findOneAndDelete({
+    const deletedVoucher = await Voucher.findOneAndDelete({
       voucherCode: voucherCodeDelete,
     });
     if (!deletedVoucher) {
@@ -116,9 +116,28 @@ const deleteVoucher = async (req, res) => {
   }
 };
 
+// Get voucher by code
+const getVoucherByCode = async (req, res) => {
+  try {
+    const { voucherCode } = req.body;
+    const voucher = await Voucher.findOne({
+      voucherCode: voucherCode,
+    });
+    if (!voucher) {
+      return res.status(404).json({ message: "Voucher not found" });
+    }
+    return res
+      .status(200)
+      .json({ message: "Get voucher by code successfull", data: voucher });
+  } catch (error) {
+    return res.status(500).json({ message: "Internal error server" });
+  }
+};
+
 module.exports = {
   createVoucher,
   filterVoucher,
   updateVoucher,
   deleteVoucher,
+  getVoucherByCode,
 };

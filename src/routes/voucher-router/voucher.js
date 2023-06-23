@@ -5,11 +5,14 @@ const {
   updateVoucher,
   filterVoucher,
   deleteVoucher,
+  getVoucherByCode,
 } = require("../../controller/voucher-controller/VoucherController");
+const { verifyTokenAndAdmin } = require("../../middlewares/auth/authorization");
 const router = express.Router();
-router.post("/create", createVoucher);
-router.post("/update/:voucherCode", updateVoucher);
+router.post("/create", verifyTokenAndAdmin, createVoucher);
+router.post("/update/:voucherCode", verifyTokenAndAdmin, updateVoucher);
 router.post("/filter", filterVoucher);
-router.post("/delete", deleteVoucher);
+router.post("/delete", verifyTokenAndAdmin, deleteVoucher);
+router.post("/getVoucherByCode", getVoucherByCode);
 
 module.exports = router;
