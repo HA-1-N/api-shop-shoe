@@ -57,11 +57,14 @@ const filterBrand = async (req, res) => {
 
     // Build the MongoDB query object based on the filter criteria
     const query = {};
-    if (brandCode) {
-      query.brandCode = brandCode;
+    if (brandCode && brandCode.trim().length > 0) {
+      query.brandCode = {
+        $regex: ".*" + brandCode.trim() + ".*",
+        $options: "i",
+      };
     }
-    if (name) {
-      query.name = name;
+    if (name && name.trim().length > 0) {
+      query.name = { $regex: ".*" + name.trim() + ".*", $options: "i" };
     }
 
     // Query the database for the filtered data

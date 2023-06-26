@@ -51,11 +51,17 @@ const filterSize = async (req, res) => {
 
     // Build the MongoDB query object based on the filter criteria
     const query = {};
-    if (sizeCode) {
-      query.sizeCode = sizeCode;
+    if (sizeCode && sizeCode.trim().length > 0) {
+      query.sizeCode = {
+        $regex: ".*" + sizeCode.trim() + ".*",
+        $options: "i",
+      };
     }
-    if (sizeName) {
-      query.sizeName = sizeName;
+    if (sizeName && sizeName.trim().length > 0) {
+      query.sizeName = {
+        $regex: ".*" + sizeName.trim() + ".*",
+        $options: "i",
+      };
     }
 
     // Query the database for the filtered data
