@@ -22,7 +22,12 @@ router.post(
 );
 router.post("/filter", filterProduct);
 router.get("/:productCode", findProductByProductCode);
-router.post("/update/:productCode", verifyTokenAndAdmin, updateProduct);
+router.post(
+  "/update/:productCode",
+  verifyTokenAndAdmin,
+  upload.array("image", 5),
+  updateProduct
+);
 router.post("/delete", verifyTokenAndAdmin, deleteProduct);
 
 module.exports = router;
