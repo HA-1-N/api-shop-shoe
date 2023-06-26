@@ -45,8 +45,11 @@ const filterVoucher = async (req, res) => {
 
     // Build the MongoDB query object based on the filter criteria
     const query = {};
-    if (voucherCode) {
-      query.voucherCode = voucherCode;
+    if (voucherCode && voucherCode.trim().length > 0) {
+      query.voucherCode = {
+        $regex: ".*" + voucherCode.trim() + ".*",
+        $options: "i",
+      };
     }
 
     // Query the database for the filtered data

@@ -50,11 +50,17 @@ const filterColor = async (req, res) => {
 
     // Build the MongoDB query object based on the filter criteria
     const query = {};
-    if (colorCode) {
-      query.colorCode = colorCode;
+    if (colorCode && colorCode.trim().length > 0) {
+      query.colorCode = {
+        $regex: ".*" + colorCode.trim() + ".*",
+        $options: "i",
+      };
     }
-    if (colorName) {
-      query.colorName = colorName;
+    if (colorName && colorName.trim().length > 0) {
+      query.colorName = {
+        $regex: ".*" + colorName.trim() + ".*",
+        $options: "i",
+      };
     }
 
     // Query the database for the filtered data

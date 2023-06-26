@@ -42,8 +42,11 @@ const filterCategory = async (req, res) => {
     // Build the MongoDB query object based on the filter criteria
     const query = {};
 
-    if (categoryName) {
-      query.categoryName = categoryName;
+    if (categoryName && categoryName.trim().length > 0) {
+      query.categoryName = {
+        $regex: ".*" + categoryName.trim() + ".*",
+        $options: "i",
+      };
     }
 
     // Query the database for the filtered data
