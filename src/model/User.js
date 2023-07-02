@@ -13,6 +13,9 @@ const UserSchema = new Schema(
       require: true,
       unique: true,
     },
+    oldPassword: {
+      type: String,
+    },
     password: {
       type: String,
       require: true,
