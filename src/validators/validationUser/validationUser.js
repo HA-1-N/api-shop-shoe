@@ -19,6 +19,7 @@ const userValidation = (data) => {
     rePassword: Joi.ref("password"),
     phone: Joi.string().optional().allow(""),
     isAdmin: Joi.boolean(),
+    oldPassword: Joi.string().pattern(new RegExp("^[a-zA-Z0-9]{3,30}$")),
   });
   return schema.validate(data);
 };

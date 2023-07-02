@@ -49,9 +49,9 @@ const registerUser = async (req, res) => {
 
   try {
     const savedUser = await newUser.save();
-    res.status(201).json(savedUser);
+    return res.status(201).json(savedUser);
   } catch (error) {
-    res.status(500).json(error);
+    return res.status(500).json(error);
   }
 };
 
@@ -66,7 +66,9 @@ const login = async (req, res) => {
   try {
     const user = await User.findOne({ userName: req.body.userName });
 
-    !user && res.status(401).json("User is not found !");
+    if (!user) {
+      return res.status(401).json("User is not found !");
+    }
 
     const hashedPassword = CryptoJS.AES.decrypt(
       user.password,
@@ -75,8 +77,9 @@ const login = async (req, res) => {
 
     const Originalpassword = hashedPassword.toString(CryptoJS.enc.Utf8);
 
-    Originalpassword !== req.body.password &&
-      res.status(401).json("Wrong credentials !");
+    if (Originalpassword !== req.body.password) {
+      return res.status(401).json("Wrong credentials !");
+    }
 
     const accessToken = jwt.sign(
       {
@@ -104,7 +107,7 @@ const forgotPassword = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
-      res.status(401).json({ message: "User is not found !" });
+      return res.status(401).json({ message: "User is not found !" });
     }
     let token = await Token.findOne({ userId: user._id });
 
