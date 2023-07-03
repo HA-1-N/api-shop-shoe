@@ -105,8 +105,6 @@ const getOrderById = asyncHandler(async (req, res) => {
       .populate("products.product")
       .populate("orderby")
       .exec();
-
-    console.log("userOrders...", userOrders);
     res.status(200).json({ data: userOrders });
   } catch (error) {
     res.status(500).json({ error: error, message: "Internal server error" });
